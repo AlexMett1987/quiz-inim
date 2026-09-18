@@ -1,0 +1,103 @@
+{
+  "dispositivo": "INIM Previdia Compact",
+  "sottotitolo": "Verifica tecnica su centrale rivelazione incendio e estinzione",
+  "livelli": {
+    "base": {
+      "etichetta": "Base",
+      "descrizione": "Interfaccia, livelli di accesso, procedure da pannello",
+      "domande": [
+        {
+          "q": "Quanti livelli di accesso distinti prevede la centrale?",
+          "opzioni": ["2", "3", "4", "5"],
+          "corretta": 2,
+          "spiegazione": "Livello 1 pubblico, livello 2 utente autorizzato (con i sottolivelli superutente e manutentore), livello 3 programmazione, livello 4 riservato ai tecnici nominati dal costruttore."
+        },
+        {
+          "q": "Qual è il PIN di fabbrica del codice di livello installatore?",
+          "opzioni": ["00001", "00002", "00003", "00004"],
+          "corretta": 3,
+          "spiegazione": "I primi quattro codici sono preimpostati: 00001 utente, 00002 superutente, 00003 manutentore, 00004 installatore (livello 3)."
+        },
+        {
+          "q": "Oltre al codice, cosa serve per entrare in programmazione?",
+          "opzioni": [
+            "Inserire il ponticello di abilitazione alla programmazione",
+            "Rimuovere le batterie",
+            "Inserire la SD card",
+            "Collegare il cavo USB al PC"
+          ],
+          "corretta": 0,
+          "spiegazione": "Senza il jumper inserito il codice di livello 3 non dà accesso al menu di programmazione."
+        },
+        {
+          "q": "Come si ripristinano i dati di fabbrica usando i pulsanti sulla scheda?",
+          "opzioni": [
+            "Tenere premuto RESET e premere FACTORY",
+            "Tenere premuto FACTORY e premere RESET",
+            "Premere RESET tre volte",
+            "Premere FACTORY per 10 secondi"
+          ],
+          "corretta": 1,
+          "spiegazione": "Si preme FACTORY e, mantenendolo premuto, si preme e rilascia RESET. In alternativa si usa la voce Dati di fabbrica nel menu di programmazione."
+        },
+        {
+          "q": "Cosa comporta il modo Notte rispetto al modo Giorno?",
+          "opzioni": [
+            "I preallarmi non vengono eseguiti",
+            "I rivelatori vengono esclusi",
+            "Il buzzer viene disabilitato",
+            "Le uscite relè si invertono"
+          ],
+          "corretta": 0,
+          "spiegazione": "In modo Notte il preallarme non viene eseguito, le sensibilità passano ai valori notturni e le sirene tacitate si riattivano automaticamente dopo un tempo impostato."
+        }
+      ]
+    },
+    "avanzato": {
+      "etichetta": "Avanzato",
+      "descrizione": "Cablaggi, limiti di loop, rete e canale di estinzione",
+      "domande": [
+        {
+          "q": "Con cablaggio del loop a due fili, quanti dispositivi di allarme incendio sono ammessi al massimo?",
+          "opzioni": ["16", "32", "64", "128"],
+          "corretta": 1,
+          "spiegazione": "Il limite è 32 tra sensori e pulsanti. Lo stesso limite di 32 dispositivi vale per ciascun terminale di ingresso o uscita usato nelle funzioni di estinzione."
+        },
+        {
+          "q": "Quali sono lunghezza e resistenza massime ammesse per un loop?",
+          "opzioni": [
+            "1000 m e 20 Ohm",
+            "1500 m e 30 Ohm",
+            "2000 m e 40 Ohm",
+            "3000 m e 60 Ohm"
+          ],
+          "corretta": 2,
+          "spiegazione": "2000 m di lunghezza e 40 Ohm come somma di positivo e negativo, con capacità totale entro 0,5 uF. La calza va collegata a terra da un solo lato."
+        },
+        {
+          "q": "Quanti punti al massimo può contenere una rete Hornet+ tra centrali e repeater?",
+          "opzioni": ["16", "24", "48", "64"],
+          "corretta": 2,
+          "spiegazione": "Il limite è 48. Nella rete deve esistere un unico punto impostato come gateway e ogni centrale deve avere indirizzo univoco e stesso bit rate."
+        },
+        {
+          "q": "A quale terminale può essere associata esclusivamente la funzione Elettrovalvola?",
+          "opzioni": ["I/O 1", "I/O 2", "I/O 3", "I/O 4"],
+          "corretta": 3,
+          "spiegazione": "L'uscita elettrovalvola è vincolata a I/O 4. La funzione Pre-estinzione è invece associata di default a I/O 3."
+        },
+        {
+          "q": "Quale differenza di orario può far fallire l'arruolamento della centrale su Inim Cloud?",
+          "opzioni": [
+            "Oltre 5 minuti",
+            "Oltre 15 minuti",
+            "Oltre 30 minuti",
+            "Oltre 60 minuti"
+          ],
+          "corretta": 1,
+          "spiegazione": "Se data e ora della centrale si discostano di oltre 15 minuti da quelle esatte la registrazione può terminare con esito negativo."
+        }
+      ]
+    }
+  }
+}

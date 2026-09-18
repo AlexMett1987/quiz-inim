@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Previdia Compact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1c1f24;
+  --panel:#e8e6e1;
+  --ink:#1c1f24;
+  --ink-soft:#5d6470;
+  --line:#c3c0b8;
+  --ok:#2f8f4e;
+  --fault:#d9a400;
+  --alarm:#c8352b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  color:var(--ink);
+  line-height:1.5;
+  display:flex;
+  justify-content:center;
+  padding:16px;
+  min-height:100vh;
+}
+main{
+  width:100%;
+  max-width:560px;
+  background:var(--panel);
+  border-radius:6px;
+  border:1px solid #9b978e;
+  box-shadow:0 0 0 6px #2a2e35;
+  overflow:hidden;
+}
+header{
+  padding:18px 20px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+.leds{display:flex;flex-direction:column;gap:6px;padding-top:4px}
+.led{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.35)}
+.led.a{background:var(--alarm)}
+.led.f{background:var(--fault)}
+.led.o{background:var(--ok)}
+h1{font-size:1.05rem;font-weight:600;margin:0;letter-spacing:.01em}
+.sub{margin:2px 0 0;font-size:.82rem;color:var(--ink-soft)}
+.body{padding:20px}
+p.lead{margin:0 0 16px;font-size:.92rem;color:var(--ink-soft)}
+button{
+  font:inherit;
+  cursor:pointer;
+  border:1px solid var(--line);
+  background:#f6f5f2;
+  color:var(--ink);
+  border-radius:4px;
+  padding:12px 14px;
+  width:100%;
+  text-align:left;
+}
+button:hover:not(:disabled){border-color:#8b8880}
+button:focus-visible{outline:2px solid #3a6ea5;outline-offset:2px}
+.levels{display:flex;flex-direction:column;gap:10px}
+.levels button{display:flex;flex-direction:column;gap:2px}
+.levels b{font-weight:600}
+.levels span{font-size:.82rem;color:var(--ink-soft)}
+.meter{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-family:"IBM Plex Mono",monospace;font-size:.78rem;
+  color:var(--ink-soft);margin-bottom:14px;
+}
+.bar{height:3px;background:var(--line);margin:-8px 0 16px;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink-soft);transition:width .25s}
+h2{font-size:1.02rem;font-weight:500;margin:0 0 16px;line-height:1.45}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button:disabled{cursor:default;opacity:1}
+.opts button.right{border-color:var(--ok);background:#e6f2e9;box-shadow:inset 3px 0 0 var(--ok)}
+.opts button.wrong{border-color:var(--alarm);background:#f6e5e3;box-shadow:inset 3px 0 0 var(--alarm)}
+.expl{
+  margin:16px 0 0;padding:12px 14px;font-size:.88rem;
+  background:#dedbd4;border-radius:4px;color:#33383f;
+}
+.next{margin-top:14px;text-align:center;font-weight:500}
+.score{font-family:"IBM Plex Mono",monospace;font-size:2.6rem;margin:0 0 4px}
+.err{color:var(--alarm)}
+footer{padding:12px 20px;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="leds"><i class="led a"></i><i class="led f"></i><i class="led o"></i></div>
+    <div>
+      <h1 id="titolo">Quiz Previdia Compact</h1>
+      <p class="sub" id="sottotitolo">Caricamento domande…</p>
+    </div>
+  </header>
+  <div class="body" id="app"></div>
+  <footer>Materiale di autoformazione interna. Verificare sempre sui manuali INIM in vigore.</footer>
+</main>
+
+<script>
+const app = document.getElementById('app');
+let dati = null, domande = [], indice = 0, punti = 0;
+
+fetch('domande.json')
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(d => {
+    dati = d;
+    document.getElementById('titolo').textContent = 'Quiz ' + d.dispositivo;
+    document.getElementById('sottotitolo').textContent = d.sottotitolo;
+    schermataLivelli();
+  })
+  .catch(() => {
+    app.innerHTML = '<p class="lead err">Domande non caricate. Il file domande.json deve trovarsi nella stessa cartella di index.html e la pagina va aperta da un server web, non da file locale.</p>';
+  });
+
+function schermataLivelli(){
+  const chiavi = Object.keys(dati.livelli);
+  app.innerHTML = '<p class="lead">Scegli il livello di difficoltà.</p><div class="levels"></div>';
+  const box = app.querySelector('.levels');
+  chiavi.forEach(k => {
+    const l = dati.livelli[k];
+    const b = document.createElement('button');
+    b.innerHTML = '<b></b><span></span>';
+    b.querySelector('b').textContent = l.etichetta;
+    b.querySelector('span').textContent = l.descrizione + ' · ' + l.domande.length + ' domande';
+    b.onclick = () => avvia(k);
+    box.appendChild(b);
+  });
+}
+
+function avvia(chiave){
+  domande = dati.livelli[chiave].domande.slice();
+  indice = 0; punti = 0;
+  mostraDomanda();
+}
+
+function mostraDomanda(){
+  const d = domande[indice];
+  app.innerHTML =
+    '<div class="meter"><span>Domanda ' + (indice+1) + ' di ' + domande.length + '</span><span>' + punti + ' corrette</span></div>' +
+    '<div class="bar"><i style="width:' + (indice/domande.length*100) + '%"></i></div>' +
+    '<h2></h2><div class="opts"></div>';
+  app.querySelector('h2').textContent = d.q;
+  const box = app.querySelector('.opts');
+  d.opzioni.forEach((testo, i) => {
+    const b = document.createElement('button');
+    b.textContent = testo;
+    b.onclick = () => rispondi(i, box, d);
+    box.appendChild(b);
+  });
+}
+
+function rispondi(scelta, box, d){
+  const bottoni = [...box.children];
+  bottoni.forEach((b,i) => {
+    b.disabled = true;
+    if(i === d.corretta) b.classList.add('right');
+    else if(i === scelta) b.classList.add('wrong');
+  });
+  if(scelta === d.corretta) punti++;
+  const e = document.createElement('p');
+  e.className = 'expl';
+  e.textContent = d.spiegazione;
+  app.appendChild(e);
+  const n = document.createElement('button');
+  n.className = 'next';
+  n.textContent = indice < domande.length - 1 ? 'Domanda successiva' : 'Vedi risultato';
+  n.onclick = () => { indice++; indice < domande.length ? mostraDomanda() : risultato(); };
+  app.appendChild(n);
+  n.focus();
+}
+
+function risultato(){
+  const pct = Math.round(punti / domande.length * 100);
+  const esito = pct >= 80 ? 'Preparazione solida.' : pct >= 50 ? 'Rivedi i punti sbagliati sul manuale.' : 'Conviene rileggere il manuale prima di ripetere.';
+  app.innerHTML = '<p class="score">' + punti + '/' + domande.length + '</p><p class="lead">' + esito + '</p>';
+  const b = document.createElement('button');
+  b.className = 'next';
+  b.textContent = 'Torna ai livelli';
+  b.onclick = schermataLivelli;
+  app.appendChild(b);
+}
+</script>
+</body>
+</html>
