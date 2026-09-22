@@ -75,10 +75,10 @@
           "spiegazione": "2000 m di lunghezza e 40 Ohm come somma di positivo e negativo, con capacità totale entro 0,5 uF. La calza va collegata a terra da un solo lato."
         },
         {
-          "q": "Quanti punti al massimo può contenere una rete Hornet+ tra centrali e repeater?",
+          "q": "Quanti nodi al massimo può contenere una rete Hornet+, contando insieme centrali e repeater?",
           "opzioni": ["16", "24", "48", "64"],
           "corretta": 2,
-          "spiegazione": "Il limite è 48. Nella rete deve esistere un unico punto impostato come gateway e ogni centrale deve avere indirizzo univoco e stesso bit rate."
+          "spiegazione": "Il limite è 48 nodi complessivi tra centrali e repeater (non punti di loop). Nella rete deve esistere un unico nodo impostato come gateway e ogni centrale deve avere indirizzo univoco e stesso bit rate."
         },
         {
           "q": "A quale terminale può essere associata esclusivamente la funzione Elettrovalvola?",
