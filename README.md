@@ -1,2 +1,2 @@
 # quiz-inim
-Quiz Inim Fire - versioneBeta-2026/09/18
+Quiz Inim Fire - versioneBeta-2026/10/05
