@@ -46,6 +46,14 @@ header{
   align-items:flex-start;
   gap:12px;
 }
+header>.testata{flex:1;min-width:0}
+#audio{
+  width:auto;flex:none;align-self:center;
+  padding:7px 11px;
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.04em;
+  background:transparent;color:var(--ink-soft);
+}
+#audio[aria-pressed="true"]{color:var(--ink);background:#f6f5f2;border-color:#8b8880}
 .leds{display:flex;flex-direction:column;gap:6px;padding-top:4px}
 .led{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.35)}
 .led.a{background:var(--alarm)}
@@ -99,16 +107,138 @@ footer{padding:12px 20px;border-top:1px solid var(--line);font-size:.74rem;color
 <main>
   <header>
     <div class="leds"><i class="led a"></i><i class="led f"></i><i class="led o"></i></div>
-    <div>
+    <div class="testata">
       <h1 id="titolo">Quiz Previdia Compact</h1>
       <p class="sub" id="sottotitolo">Caricamento domande…</p>
     </div>
+    <button id="audio" type="button" aria-pressed="true" title="Musica di accompagnamento">♪ on</button>
   </header>
   <div class="body" id="app"></div>
   <footer>Materiale di autoformazione interna. Verificare sempre sui manuali INIM in vigore.</footer>
 </main>
 
 <script>
+/* ---------- Audio: tappeto musicale generato, nessun file esterno ---------- */
+const Suono = (() => {
+  const SCALA = [0, 3, 5, 7, 10];          // pentatonica minore: neutra, non stucchevole
+  const BASE = 220;                        // La3
+  let ctx = null, master = null, timer = null;
+  let voluto = true;                       // acceso di default: parte al primo tocco
+
+  const hz = semi => BASE * Math.pow(2, semi / 12);
+
+  function avviaCtx(){
+    if(ctx) return true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0;
+    master.connect(ctx.destination);
+    return true;
+  }
+
+  // Una nota di pad: due oscillatori lievemente scordati dentro un filtro passa-basso
+  function pad(semi, durata){
+    const t = ctx.currentTime;
+    const g = ctx.createGain();
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 900;
+    f.Q.value = 0.6;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.16, t + durata * 0.35);   // attacco lento
+    g.gain.linearRampToValueAtTime(0, t + durata);
+    f.connect(g); g.connect(master);
+    [0, 4].forEach(scordatura => {
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = hz(semi);
+      o.detune.value = scordatura;
+      o.connect(f);
+      o.start(t);
+      o.stop(t + durata + 0.1);
+    });
+  }
+
+  function ciclo(){
+    const semi = SCALA[Math.floor(Math.random() * SCALA.length)]
+               + 12 * Math.floor(Math.random() * 2);
+    pad(semi, 5.5);
+    pad(semi - 12, 7);                                          // basso di sostegno
+    timer = setTimeout(ciclo, 3800 + Math.random() * 1600);      // nessun loop percepibile
+  }
+
+  // Segnale breve per la risposta, indipendente dal tappeto
+  function nota(semi, durata, tipo){
+    if(!voluto || !ctx || ctx.state !== 'running') return;
+    const t = ctx.currentTime;
+    const g = ctx.createGain();
+    const o = ctx.createOscillator();
+    o.type = tipo;
+    o.frequency.value = hz(semi);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + durata);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + durata + 0.02);
+  }
+
+  // Applica lo stato voluto. Richiede un gesto dell'utente già avvenuto:
+  // i browser bloccano qualsiasi audio avviato senza interazione.
+  function applica(){
+    if(!avviaCtx()) return null;                               // Web Audio non disponibile
+    if(voluto){
+      ctx.resume();
+      master.gain.setTargetAtTime(0.5, ctx.currentTime, 1.2);  // dissolvenza in entrata
+      if(!timer) ciclo();
+    } else {
+      master.gain.setTargetAtTime(0, ctx.currentTime, 0.6);
+      clearTimeout(timer); timer = null;
+    }
+    return voluto;
+  }
+
+  return {
+    get attivo(){ return voluto; },
+    get disponibile(){ return !!(window.AudioContext || window.webkitAudioContext); },
+    sblocca(){ if(voluto) applica(); },     // primo gesto qualunque sulla pagina
+    commuta(){ voluto = !voluto; return applica(); },
+    giusto(){ nota(12, 0.16, 'sine'); setTimeout(() => nota(19, 0.22, 'sine'), 110); },
+    sbagliato(){ nota(-5, 0.3, 'sawtooth'); },
+    fine(pct){
+      if(pct < 50) return nota(-7, 0.5, 'sine');
+      [0, 7, 12, 16].forEach((s, i) => setTimeout(() => nota(s, 0.3, 'sine'), i * 130));
+    }
+  };
+})();
+
+const btnAudio = document.getElementById('audio');
+
+function etichettaAudio(on){
+  btnAudio.setAttribute('aria-pressed', String(on));
+  btnAudio.textContent = on ? '♪ on' : '♪ off';
+}
+
+if(!Suono.disponibile){
+  btnAudio.textContent = 'n/d';
+  btnAudio.disabled = true;
+} else {
+  etichettaAudio(Suono.attivo);
+  btnAudio.addEventListener('click', () => etichettaAudio(Suono.commuta()));
+  // L'audio parte al primo gesto dell'utente, requisito di tutti i browser.
+  // Il pulsante è escluso: ci pensa già il suo gestore di click.
+  let sbloccato = false;
+  const sblocca = ev => {
+    if(sbloccato || btnAudio.contains(ev.target)) return;
+    sbloccato = true;
+    Suono.sblocca();
+    ['pointerdown', 'keydown'].forEach(e => document.removeEventListener(e, sblocca));
+  };
+  ['pointerdown', 'keydown'].forEach(e => document.addEventListener(e, sblocca));
+}
+
+/* ---------- Quiz ---------- */
 const app = document.getElementById('app');
 let dati = null, domande = [], indice = 0, punti = 0;
 
@@ -168,7 +298,7 @@ function rispondi(scelta, box, d){
     if(i === d.corretta) b.classList.add('right');
     else if(i === scelta) b.classList.add('wrong');
   });
-  if(scelta === d.corretta) punti++;
+  if(scelta === d.corretta){ punti++; Suono.giusto(); } else Suono.sbagliato();
   const e = document.createElement('p');
   e.className = 'expl';
   e.textContent = d.spiegazione;
@@ -184,6 +314,7 @@ function rispondi(scelta, box, d){
 function risultato(){
   const pct = Math.round(punti / domande.length * 100);
   const esito = pct >= 80 ? 'Preparazione solida.' : pct >= 50 ? 'Rivedi i punti sbagliati sul manuale.' : 'Conviene rileggere il manuale prima di ripetere.';
+  Suono.fine(pct);
   app.innerHTML = '<p class="score">' + punti + '/' + domande.length + '</p><p class="lead">' + esito + '</p>';
   const b = document.createElement('button');
   b.className = 'next';
